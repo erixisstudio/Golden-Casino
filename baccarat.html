@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Baccarat - Golden Casino</title>
+
+<style>
+body {
+    font-family: Arial;
+    background:#45bd4f;
+    color: white;
+    text-align: center;
+    padding: 30px;
+}
+
+.box {
+    display: inline-block;
+    padding: 15px;
+    margin: 15px;
+    border: 2px solid white;
+    border-radius: 10px;
+    width: 200px;
+    background: #145c43;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+input, select {
+    padding: 8px;
+    margin: 5px;
+    font-size: 16px;
+    width: 120px;
+}
+
+.result {
+    font-size: 20px;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.money {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: gold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Baccarat </h1>
+
+<div class="money">
+💰 Budżet: <span id="money">1000000</span>$
+</div>
+
+<div>
+    <select id="betType">
+        <option value="player">Player</option>
+        <option value="banker">Banker</option>
+        <option value="tie">Tie</option>
+    </select>
+
+    <input id="betAmount" type="number" value="100" min="1">
+
+    <br>
+    <button id="dealbtn" onclick="deal()">🎲 Deal</button>
+</div>
+
+<br>
+
+<div class="box">
+    <h2>Player</h2>
+    <div id="playerCards">-</div>
+    <div id="playerScore">Score: -</div>
+</div>
+
+<div class="box">
+    <h2>Banker</h2>
+    <div id="bankerCards">-</div>
+    <div id="bankerScore">Score: -</div>
+</div>
+
+<div class="result" id="result">Wybierz zakład i graj</div>
+
+<a href="głownastrona.html">dom</a>
+<script>
+
+let money = parseInt(localStorage.getItem("money")) || 1000;
+document.addEventListener("DOMContentLoaded", function() {
+    let money = parseInt(localStorage.getItem("money")) || 1000;
+    document.getElementById("money").innerText = money;
+});
+function cardValue() {
+    let v = Math.floor(Math.random() * 13) + 1;
+    if (v > 10) return 0;
+    return v;
+}
+
+function score(cards) {
+    return cards.reduce((a,b) => a+b, 0) % 10;
+    localStorage.setItem("money", money);
+}
+document.addEventListener("keydown", function(event) {
+
+    if(event.key.toLowerCase() === "t") {
+        document.getElementById("dealbtn").click();
+    }
+    
+    localStorage.setItem("money", money);
+
+});
+function deal() {
+localStorage.setItem("money", money);
+    let betType = document.getElementById("betType").value;
+    let betAmount = parseInt(document.getElementById("betAmount").value);
+
+    if (betAmount > money) {
+        document.getElementById("result").innerText = "❌ Nie masz tyle kasy!";
+        return;
+    }
+
+    if (betAmount <= 0) {
+        document.getElementById("result").innerText = "❌ Zła stawka!";
+        return;
+    }
+
+    // odejmujemy zakład
+    money -= betAmount;
+
+    let player = [cardValue(), cardValue()];
+    let banker = [cardValue(), cardValue()];
+
+    let pScore = score(player);
+    let bScore = score(banker);
+
+    document.getElementById("playerCards").innerText = player.join(", ");
+    document.getElementById("bankerCards").innerText = banker.join(", ");
+
+    document.getElementById("playerScore").innerText = "Score: " + pScore;
+    document.getElementById("bankerScore").innerText = "Score: " + bScore;
+
+    let winner = "";
+
+    if (pScore > bScore) winner = "player";
+    else if (bScore > pScore) winner = "banker";
+    else winner = "tie";
+
+    let resultText = "";
+
+    // WYGRANA / PRZEGRANA
+    if (betType === winner) {
+
+        let win = 0;
+
+        if (winner === "player") win = betAmount * 2;
+        if (winner === "banker") win = betAmount * 2;
+        if (winner === "tie") win = betAmount * 9;
+
+        money += win;
+
+        resultText = "🔥 WYGRANA! +" + win + "$";
+
+    } else {
+        resultText = "💀 PRZEGRANA! -" + betAmount + "$";
+    }
+
+    document.getElementById("money").innerText = money;
+    document.getElementById("result").innerText = resultText;
+
+    if (money <= 0) {
+        document.getElementById("result").innerText = "💀 KONIEC GRY - brak pieniędzy";
+    }
+    localStorage.setItem("money", money);
+}
+document.addEventListener("DOMContentLoaded", function() {
+    let money = parseInt(localStorage.getItem("money")) || 1000;
+    document.getElementById("money").innerText = money;
+});
+</script>
+
+</body>
+</html>

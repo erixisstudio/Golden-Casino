@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crash - Golden Casino</title>
+</head>
+<body>
+    <h2>Crash</h2>
+
+<div>💰 <span id="money3"></span></div>
+
+<div>Multiplier: <span id="multi">1.00</span>x</div>
+
+<input id="bet3" type="number" placeholder="stawka">
+
+<button id="startbtn" onclick="start()">Start</button>
+<button id="stopbtn" onclick="cashout()">Cashout</button>
+<style>
+    
+    body{
+    background:#45bd4f;
+    }
+</style>
+<div id="res3"></div>
+
+<script>
+
+let money3 = parseInt(localStorage.getItem("money")) || 1000;
+document.getElementById("money3").innerText = money3;
+
+let multiplier = 1;
+let running = false;
+let interval;
+
+function save3() {
+    localStorage.setItem("money", money3);
+    document.getElementById("money3").innerText = money3;
+}
+
+function start() {
+
+    let bet = parseInt(document.getElementById("bet3").value);
+    if (bet > money3 || running) return;
+
+    money3 -= bet;
+    running = true;
+    multiplier = 1;
+
+    interval = setInterval(() => {
+
+        multiplier += 0.05;
+        document.getElementById("multi").innerText = multiplier.toFixed(2);
+
+        // 💥 crash random
+        if (Math.random() < 0.02) {
+    clearInterval(interval);
+    running = false;
+
+    document.getElementById("res3").innerText = "💥 CRASH! STRACIŁEŚ BET";
+
+    // zapisujemy stan (money już wcześniej zmniejszone)
+    save3();
+
+    window.currentBet = 0; // zabezpieczenie
+}
+
+    }, 100);
+
+    window.currentBet = bet;
+}
+
+function cashout() {
+
+    if (!running) return;
+
+    clearInterval(interval);
+    running = false;
+
+    let win = window.currentBet * multiplier;
+    money3 += win;
+
+    document.getElementById("res3").innerText =
+        "🔥 CASHOUT +" + win.toFixed(2);
+
+    save3();
+}
+document.addEventListener("keydown", function(event) {
+
+    if(event.key.toLowerCase() === "t") {
+        document.getElementById("startbtn").click();
+    }
+save3();
+});
+
+document.addEventListener("keydown", function(event) {
+
+    if(event.key.toLowerCase() === "y") {
+        document.getElementById("stopbtn").click();
+    }
+save3();
+});
+</script>
+<a href="głownastrona.html">dom</a>
+</body>
+</html>

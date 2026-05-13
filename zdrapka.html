@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keno - Golden Casino</title>
+</head>
+<body>
+<h2>keno</h2>
+<style>
+    body{
+        
+    background:#45bd4f;
+    }
+</style>
+<div>💰 <span id="money">0</span></div>
+
+<button onclick="buyScratch()">Kup zdrapkę (25$)</button>
+
+<div id="result"></div>
+
+<script>
+let money = parseInt(localStorage.getItem("money")) || 1000;
+const COST = 25;
+
+document.getElementById("money").innerText = money;
+
+function save() {
+    localStorage.setItem("money", money);
+    document.getElementById("money").innerText = money;
+}
+document.addEventListener("DOMContentLoaded", function() {
+    let money = parseInt(localStorage.getItem("money")) || 1000;
+    document.getElementById("money").innerText = money;
+});
+function buyScratch() {
+
+localStorage.setItem("money", money);
+    if (money < COST) {
+        document.getElementById("result").innerText = "❌ Brak kasy";
+        return;
+    }
+
+    money -= COST;
+
+    // 🎲 losowanie 1–50
+    let roll = Math.floor(Math.random() * 50) + 1;
+
+    let win = 0;
+    let text = "";
+
+    if (roll === 4) {
+        win = COST * 2;
+        text = "🔥 TRAF 4 → +" + win;
+    }
+    else if (roll === 44) {
+        win = COST * 444;
+        text = "💎 JACKPOT 44 → +" + win;
+    }
+    else {
+        text = "💀 " + roll + " → nic";
+    }
+
+    money += win;
+
+    localStorage.setItem("money", money);
+    document.getElementById("result").innerText = text;
+
+    save();
+}
+</script>
+<a href="głownastrona.html">dom</a>
+</body>
+</html>
