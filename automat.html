@@ -6,103 +6,91 @@
 <title>Slot - Golden Casino</title>
 
 <style>
-
 body{
     margin:0;
     height:100vh;
     background:#45bd4f;
     font-family:Arial;
     color:white;
-
     display:flex;
     justify-content:center;
     align-items:center;
 }
-
 .slot{
-    width:800px;
+    width:950px;
     background:#1d1d1d;
     padding:30px;
     border-radius:25px;
     text-align:center;
     box-shadow:0 0 40px rgba(0,0,0,0.7);
 }
-
 .money{
-    font-size:28px;
-    margin-bottom:20px;
+    font-size:24px;
+    margin-bottom:15px;
 }
-
+.session-stats{
+    font-size:20px;
+    color:gold;
+    margin-bottom:20px;
+    background:#2b2b2b;
+    padding:10px;
+    border-radius:10px;
+}
 .reels{
     display:flex;
     justify-content:center;
-    gap:15px;
+    flex-wrap:wrap;
+    gap:10px;
     margin:30px 0;
 }
-
 .reel{
-    width:90px;
-    height:90px;
+    width:70px;
+    height:70px;
     background:#2b2b2b;
     border:4px solid #444;
     border-radius:15px;
-
     display:flex;
     justify-content:center;
     align-items:center;
-
-    font-size:50px;
-
+    font-size:30px;
     transition:0.2s;
 }
 
-/* animacja spin */
+/* Zielone podświetlenie dla wygranych i mnożników */
+.highlight {
+    color: lime !important;
+    border-color: lime !important;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+    background: #1a3a1a !important;
+}
+
 .spinning{
     animation:spinAnim 0.1s infinite;
 }
-
 @keyframes spinAnim{
-
-    0%{
-        transform:translateY(-5px);
-    }
-
-    50%{
-        transform:translateY(5px);
-    }
-
-    100%{
-        transform:translateY(-5px);
-    }
-
+    0%{ transform:translateY(-5px); }
+    50%{ transform:translateY(5px); }
+    100%{ transform:translateY(-5px); }
 }
-
 button{
-    padding:15px 35px;
-    font-size:22px;
+    padding:15px 25px;
+    font-size:20px;
     border:none;
     border-radius:15px;
     background:gold;
     cursor:pointer;
     font-weight:bold;
+    margin:5px;
 }
-
 button:hover{
     transform:scale(1.05);
 }
-
 #result{
     min-height:40px;
+    margin-top:15px;
 }
-
-.win{
-    color:lime;
-}
-
-.lose{
-    color:red;
-}
-
+.win{ color:lime; }
+.lose{ color:red; }
 .info{
     margin-top:25px;
     background:#252525;
@@ -110,236 +98,280 @@ button:hover{
     border-radius:15px;
     text-align:left;
     line-height:1.7;
+    font-size:14px;
 }
-
 </style>
 </head>
 <body>
-
-<a href="index.html">dom</a>
+<a style="text-decoration: none; color: black;" href="index.html">dom</a>
 <div class="slot">
-
-    <h1>Slot</h1>
-
-    <div class="money">
-        💰 Pieniądze:
-        <span id="money">100</span>$
+    <h1>Slot x10</h1>
+    <div class="money">💰 Pieniądze główne: <span id="money">100</span>$</div>
+    
+    <div id="setupPanel">
+        <button onclick="startSession(15)">15 Spinów (300k$)</button>
+        <button onclick="startSession(25)">25 Spinów (1mln$)</button>
+        <button onclick="startSession(50)">50 Spinów (3mln$)</button>
+        <button onclick="startSession(100)">100 Spinów (30mln$)</button>
     </div>
 
-    <!-- 5 bębnów -->
-    <div class="reels">
+    <div id="spinPanel" style="display:none;">
+        <div class="session-stats">
+        Zebrany hajs: <span id="sessionMoney">0</span>$ | 
+        Zebrany Mnożnik: x<span id="sessionMultiplier">0</span> | 
+        <!-- TO DODAJESZ: -->
+        <strong>Wymnożona wygrana: <span id="predictedMoney" style="color: lime; text-shadow: 0 0 5px rgba(0,255,0,0.4);">0</span>$</strong> <br>
+        Pozostało rzutów: <span id="spinsLeft">0</span>
+</div>
+        <button onclick="spin()" id="spinBtn">ZAKRĘĆ</button>
+    </div>
 
+    <div class="reels">
         <div class="reel" id="r1">❓</div>
         <div class="reel" id="r2">❓</div>
         <div class="reel" id="r3">❓</div>
         <div class="reel" id="r4">❓</div>
         <div class="reel" id="r5">❓</div>
-
+        <div class="reel" id="r6">❓</div>
+        <div class="reel" id="r7">❓</div>
+        <div class="reel" id="r8">❓</div>
+        <div class="reel" id="r9">❓</div>
+        <div class="reel" id="r10">❓</div>
     </div>
 
-    <button onclick="spin()" id="spinBtn">
-        SPIN - 5000$
-    </button>
-
-    <h2 id="result"></h2>
+    <h2 id="result">Wybierz pakiet aby zacząć</h2>
 
     <div class="info">
-
-        <b>Zasady:</b>
-
+        <b>Zasady Jackpotów (Tylko dla emotki 🟪):</b>
         <ul>
-            <li>5 takich samych = JACKPOT 300k</li>
-            <li>4 takich samych = duża wygrana 10k</li>
-            <li>3 takich samych = mała wygrana 7k</li>
-            <li>mniej = przegrana</li>
-            <li>pięć 🟪 = giga JACKPOT 1mln </li>
+            <li>10x 🟪 = ULTIMATE 15 mln</li>
+            <li>9x 🟪 = SUPER 10 mln</li>
+            <li>8x 🟪 = VERY GOOD 5 mln</li>
+        </ul><b>Zasady Jackpotów (Tylko dla emotki ☠️):</b>
+        <ul>
+            <li>10x ☠️ = ULTIMATE 20 mln</li>
+            <li>9x ☠️ = SUPER 15 mln</li>
+            <li>8x ☠️ = VERY GOOD 10 mln</li>
         </ul>
-
+        <b>Zwykłe wygrane:</b>
+        <ul>
+            <li>10 takich samych = 1 mln | 9 = 500k | 8 = 300k | 7 = 100k | 6 = 50k</li>
+            <li>5 takich samych = 30k | 4 = 10k | 3 = 7k</li>
+        </ul>
     </div>
-
 </div>
 
 <script>
+const symbols = ["7️⃣","💎","🍒","🍋","🔔","🟪","🐖","☠️","▶️","®️","🦋","💩","0.1x","0.2x","0.5x",];
+
+let money = parseInt(localStorage.getItem("money")) || 100000;
+let spinsLeft = 0;
+let sessionMoney = 0;
+let sessionMultiplier = 0;
+
 document.addEventListener("DOMContentLoaded", function() {
-    let money = parseInt(localStorage.getItem("money")) || 1000;
     document.getElementById("money").innerText = money;
 });
-const symbols = [
-    "7️⃣",
-    "💎",
-    "🍒",
-    "🍋",
-    "🔔",
-    "🟪"
-];
 
-let money = parseInt(localStorage.getItem("money")) || 1000;
-
-function randomSymbol(){
-
-    let randomIndex = Math.floor(
-        Math.random() * symbols.length
-    );
-
-    return symbols[randomIndex];
-}
 document.addEventListener("keydown", function(event) {
-
-    if(event.key.toLowerCase() === "t") {
+    if(event.key.toLowerCase() === "t" && spinsLeft > 0) {
         document.getElementById("spinBtn").click();
     }
-
 });
-function spin(){
-localStorage.setItem("money", money);
-    if(money < 10){
-        alert("Nie masz pieniędzy XD");
-        return;
+
+function randomSymbol(){
+    let randomIndex = Math.floor(Math.random() * symbols.length);
+    return symbols[randomIndex];
+}
+
+function startSession(amount){
+    let cost = 0;
+
+    // Tutaj ręcznie ustalasz OGÓLNĄ cenę za cały pakiet:
+    if (amount === 15) {
+        cost = 300000;   // Cena za pakiet 15 spinów (w przeliczeniu ok. 46k za spin - opłaca się!)
+    } 
+    else if (amount === 25) {
+        cost = 1000000;  // Cena za pakiet 25 spinów (w przeliczeniu ok. 48k za spin)
+    } 
+    else if (amount === 50) {
+        cost = 3000000;  // Twoja wyważona cena za 50 spinów (60k za spin)
+    } 
+    else if (amount === 100) {
+        cost = 30000000;  // Twoja wyważona cena za 50 spinów (60k za spin)
+    } 
+    else {
+        cost = amount * 60000; // Awaryjny koszt na wypadek, gdybyś dodał inny przycisk
     }
 
-    money -= 5000;
-
+    // Reszta funkcji zostaje dokładnie taka sama jak była:
+    if(money < cost){
+        alert("Nie masz wystarczająco pieniędzy na ten pakiet!");
+        return;
+    }
+    money -= cost;
+    localStorage.setItem("money", money);
     document.getElementById("money").innerText = money;
+    spinsLeft = amount;
+    sessionMoney = 0;
+    sessionMultiplier = 0;
+    document.getElementById("setupPanel").style.display = "none";
+    document.getElementById("spinPanel").style.display = "block";
+    document.getElementById("result").innerHTML = "Zaczynamy sesję!";
+    document.getElementById("result").className = "";
+    updateSessionUI();
+}
 
+function updateSessionUI(){
+    document.getElementById("sessionMoney").innerText = sessionMoney;
+    document.getElementById("sessionMultiplier").innerText = sessionMultiplier.toFixed(1);
+    
+    // NOWOŚĆ: Mnożenie na żywo i wrzucanie do nowego tekstu
+    let currentMult = sessionMultiplier > 0 ? sessionMultiplier : 1;
+    let predicted = Math.floor(sessionMoney * currentMult);
+    document.getElementById("predictedMoney").innerText = predicted;
+    
+    document.getElementById("spinsLeft").innerText = spinsLeft;
+}
+
+function spin(){
+    if(spinsLeft <= 0) return;
+    let spinBtn = document.getElementById("spinBtn");
     let result = document.getElementById("result");
     result.innerHTML = "🎰 Kręcenie...";
     result.className = "";
-
-    let spinBtn = document.getElementById("spinBtn");
     spinBtn.disabled = true;
 
-    // wszystkie bębny
-    let reels = [
-        document.getElementById("r1"),
-        document.getElementById("r2"),
-        document.getElementById("r3"),
-        document.getElementById("r4"),
-        document.getElementById("r5")
-    ];
+    let reels = [];
+    for(let i=1; i<=10; i++){
+        let r = document.getElementById("r" + i);
+        // Resetujemy stare podświetlenia przed nowym losowaniem
+        r.classList.remove("highlight");
+        r.classList.add("spinning");
+        reels.push(r);
+    }
 
-    // dodanie animacji
-    reels.forEach(reel => {
-        reel.classList.add("spinning");
-    });
-
-    // fake spinning
     let spinning = setInterval(() => {
-
-        reels.forEach(reel => {
-            reel.innerText = randomSymbol();
-        });
-
+        reels.forEach(reel => { reel.innerText = randomSymbol(); });
     }, 100);
 
-    // zatrzymanie po 2 sekundach
     setTimeout(() => {
-
         clearInterval(spinning);
-
-        // finalne symbole
         let finalSymbols = [];
-
-        reels.forEach((reel, index) => {
-
+        reels.forEach(reel => {
             let symbol = randomSymbol();
-
             reel.innerText = symbol;
-
             reel.classList.remove("spinning");
-
             finalSymbols.push(symbol);
-
         });
-
         checkWin(finalSymbols);
-
         spinBtn.disabled = false;
-
     }, 2000);
-
 }
 
 function checkWin(finalSymbols){
-
     let result = document.getElementById("result");
     let counts = {};
+    let turnMultiplier = 0;
 
+    // Liczenie zwykłych symboli i sumowanie mnożników
     finalSymbols.forEach(symbol => {
-        counts[symbol] = (counts[symbol] || 0) + 1;
+        if(symbol.includes("x")){
+            turnMultiplier += parseFloat(symbol);
+        } else {
+            counts[symbol] = (counts[symbol] || 0) + 1;
+        }
     });
 
-    let max = Math.max(...Object.values(counts));
-    let bestSymbol = Object.keys(counts).find(k => counts[k] === max);
-
-    let payout = 0;
-    let text = "";
-    let className = "lose";
-
-    // 🧨 SCALING SYSTEM 3–10
-    if (max >= 3) {
-
-        if (max === 3) {
-            payout = 7000;
-            text = "🎉 TRIPLE WIN +7K";
+    sessionMultiplier += turnMultiplier;
+    
+    // Szukanie najczęstszego zwykłego symbolu
+    let max = 0;
+    let maxSymbol = "";
+    for(let sym in counts){
+        if(counts[sym] > max){
+            max = counts[sym];
+            maxSymbol = sym;
         }
-
-        else if (max === 4) {
-            payout = 20000;
-            text = "💎 QUAD WIN +20K";
-        }
-
-        else if (max === 5) {
-            payout = 300000;
-            text = "🔥 JACKPOT +300K";
-        }
-
-        else if (max === 6) {
-            payout = 1000000;
-            text = "🚀 MEGA JACKPOT +1M";
-        }
-
-        else if (max === 7) {
-            payout = 5000000;
-            text = "🌌 ULTRA JACKPOT +5M";
-        }
-
-        else if (max === 8) {
-            payout = 20000000;
-            text = "💀 GODLIKE WIN +20M";
-        }
-
-        else if (max === 9) {
-            payout = 50000000;
-            text = "👑 LEGENDARY JACKPOT +50M";
-        }
-
-        else if (max === 10) {
-            payout = 100000000;
-            text = "🔥 INFINITE GOD WIN +100M";
-        }
-
-        className = "win";
-    }
-    else {
-        text = "❌ NIC NIE WYGRAŁEŚ";
-        className = "lose";
     }
 
-    // 🟪 BONUS LAYER (special symbol)
-    if (bestSymbol === "🟪" && max >= 5) {
-        payout += 1000000;
-        text += " + 🟪 BONUS +1M";
+    let winAmount = 0;
+    let msg = "❌ Brak trafień w tej rundzie";
+    let cName = "lose";
+
+    // Sprawdzanie wygranych dla fioletowych kwadratów (Jackpoty)
+    if(maxSymbol === "🟪"){
+        if(max === 10){ winAmount = 15000000; msg = "🔥 ULTIMATE JACKPOT! +15mln"; cName = "win"; }
+        else if(max === 9){ winAmount = 10000000; msg = "💎 SUPER! +10mln"; cName = "win"; }
+        else if(max === 8){ winAmount = 5000000; msg = "✨ VERY GOOD! +5mln"; cName = "win"; }
+    }
+    if(maxSymbol === "☠️"){
+            if(max === 10){ winAmount = 20000000; msg = "🔥 ULTIMATE JACKPOT! +15mln"; cName = "win"; }
+            else if(max === 9){ winAmount = 15000000; msg = "💎 SUPER! +10mln"; cName = "win"; }
+            else if(max === 8){ winAmount = 10000000; msg = "✨ VERY GOOD! +5mln"; cName = "win"; }
+    }
+    // Sprawdzanie normalnych wygranych (3 lub więcej takich samych)
+    if(winAmount === 0 && max >= 3){
+        if(max === 10) winAmount = 1000000;
+        else if(max === 9) winAmount = 500000;
+        else if(max === 8) winAmount = 30000;
+        else if(max === 7) winAmount = 100000;
+        else if(max === 6) winAmount = 50000;
+        else if(max === 5) winAmount = 30000;
+        else if(max === 4) winAmount = 10000;
+        else if(max === 3) winAmount = 7000;
+        
+        if(winAmount > 0){
+            msg = "🎉 WYGRANA RUNDY +" + winAmount + "$";
+            cName = "win";
+        }
     }
 
-    money += payout;
+    if(turnMultiplier > 0){
+        msg += " (Trafiono mnożnik +" + turnMultiplier.toFixed(1) + "x!)";
+    }
 
-    result.innerHTML = text;
-    result.className = className;
+    // PODŚWIETLANIE BĘBNÓW:
+    for(let i = 1; i <= 10; i++) {
+        let reel = document.getElementById("r" + i);
+        let currentSymbol = reel.innerText;
 
-    document.getElementById("money").innerText = money;
+        // Warunek 1: Jeśli to symbol, który dał nam wygraną (min. 3 sztuki)
+        if(max >= 3 && currentSymbol === maxSymbol) {
+            reel.classList.add("highlight");
+        }
+        
+        // Warunek 2: Jeśli to jakikolwiek mnożnik (zawiera literkę 'x')
+        if(currentSymbol.includes("x")) {
+            reel.classList.add("highlight");
+        }
+    }
+
+    sessionMoney += winAmount;
+    result.innerHTML = msg;
+    result.className = cName;
+    spinsLeft--;
+    updateSessionUI();
+
+    if(spinsLeft === 0){
+        endSession();
+    }
 }
 
+function endSession(){
+    let finalMult = sessionMultiplier > 0 ? sessionMultiplier : 1;
+    let finalWin = Math.floor(sessionMoney * finalMult);
+    money += finalWin;
+    localStorage.setItem("money", money);
+    document.getElementById("money").innerText = money;
+    
+    let result = document.getElementById("result");
+    result.innerHTML = "🏁 Koniec sesji! Baza: " + sessionMoney + "$ razy x" + finalMult.toFixed(1) + " = " + finalWin + "$ do portfela!";
+    result.className = "win";
+    
+    document.getElementById("setupPanel").style.display = "block";
+    document.getElementById("spinPanel").style.display = "none";
+}
 </script>
-
 </body>
 </html>

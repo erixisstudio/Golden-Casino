@@ -2,6 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roulette - Golden Casino</title>
 
 <style>
@@ -9,113 +10,248 @@ body {
     margin: 0;
     background: #0f5132;
     color: white;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+h1 {
+    margin-top: 10px;
+    font-size: 36px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.casino-container {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
 }
 
 canvas {
-    background: #145c43;
-    border-radius: 50%;
-    margin-top: 20px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    background: transparent;
+    margin: 10px 0;
 }
 
 .controls {
-    margin-top: 20px;
+    margin-top: 15px;
+    background: #145c43;
+    padding: 15px 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
 }
 
 button, select, input {
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
     margin: 5px;
     border-radius: 8px;
-    border: none;
+    border: 2px solid #333;
+    background: #fff;
+    color: #333;
+    outline: none;
 }
 
 button {
-    background: gold;
+    background: linear-gradient(135deg, gold, #cc9900);
     cursor: pointer;
     font-weight: bold;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #fff275, gold);
+}
+
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: scale(1);
 }
 
 #money {
-    font-size: 24px;
+    font-size: 28px;
     color: gold;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
 #result {
     margin-top: 15px;
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    min-height: 30px;
+}
+
+.back-link {
+    margin-top: 20px;
+    text-decoration: none;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🎰 Roulette</h1>
+<div class="casino-container">
+    <h1>🎰 Roulette Premium</h1>
+    <div id="money">💰 0</div>
 
-<div id="money">💰 0</div>
+    <!-- Zwiększyliśmy canvas do 400x400 dla lepszych detali -->
+    <canvas id="wheel" width="400" height="400"></canvas>
 
-<canvas id="wheel" width="300" height="300"></canvas>
+    <div class="controls">
+        <select id="betType">
+            <option value="red">🔴 Red (x2)</option>
+            <option value="black">⚫ Black (x2)</option>
+            <option value="number">🔢 Number (x35)</option>
+        </select>
 
-<div class="controls">
-    <select id="betType">
-        <option value="red">Red</option>
-        <option value="black">Black</option>
-        <option value="number">Number</option>
-    </select>
+        <input type="number" id="betAmount" value="100" min="1">
+        <input type="number" id="betNumber" placeholder="0-36" style="width: 70px;">
 
-    <input type="number" id="betAmount" value="100" min="1">
-    <input type="number" id="betNumber" placeholder="0-36">
+        <br>
+        <button onclick="spin()" id="spinBtn">🎲 SPIN</button>
+    </div>
 
-    <br>
-
-    <button onclick="spin()">🎲 SPIN</button>
+    <div id="result">Wybierz zakład i zakręć!</div>
 </div>
 
-<div id="result">Wybierz zakład</div>
+<a class="back-link" href="index.html">← Powrót do domu</a>
 
 <script>
-let money = parseInt(localStorage.getItem("money")) || 1000;
+let money = parseInt(localStorage.getItem("money")) || 100000;
 document.getElementById("money").innerText = "💰 " + money;
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 
-const numbers = Array.from({length: 37}, (_, i) => i);
-const redNumbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+// Oryginalny, oficjalny układ koła europejskiej ruletki (od 0 do 26)
+const rouletteOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
-let angle = 0;
+let wheelAngle = 0;
+let ballAngle = 0;
+let ballRadius = 160;
 let spinning = false;
 
+// Funkcja pomocnicza rysująca koło i kulkę
 function drawWheel() {
-    const radius = 140;
-    const step = (Math.PI * 2) / numbers.length;
+    const cx = 200;
+    const cy = 200;
+    const outerRadius = 185;
+    const innerRadius = 130;
+    const step = (Math.PI * 2) / rouletteOrder.length;
 
-    for (let i = 0; i < numbers.length; i++) {
-        let start = angle + i * step;
+    ctx.clearRect(0, 0, 400, 400);
+
+    // 1. Drewniano-złota zewnętrzna felga (Efekt 3D)
+    let outerGrad = ctx.createRadialGradient(cx, cy, innerRadius, cx, cy, outerRadius + 15);
+    outerGrad.addColorStop(0, '#2b1100');
+    outerGrad.addColorStop(0.7, '#5c2c06');
+    outerGrad.addColorStop(0.9, 'gold');
+    outerGrad.addColorStop(1, '#3a1a00');
+    
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerRadius + 10, 0, Math.PI * 2);
+    ctx.fillStyle = outerGrad;
+    ctx.fill();
+
+    // 2. Rysowanie poszczególnych slotów z numerami
+    for (let i = 0; i < rouletteOrder.length; i++) {
+        let currentNum = rouletteOrder[i];
+        let startRad = wheelAngle + i * step;
 
         ctx.beginPath();
-        ctx.moveTo(150,150);
-        ctx.arc(150,150,radius,start,start+step);
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, outerRadius, startRad, startRad + step);
 
-        ctx.fillStyle = i === 0 ? "green" : (redNumbers.includes(i) ? "#b30000" : "#111");
+        // Kolorowanie slotów zgodnie z zasadami kasyna
+        if (currentNum === 0) {
+            ctx.fillStyle = "#008f11"; // Zielone zero
+        } else if (redNumbers.includes(currentNum)) {
+            ctx.fillStyle = "#d32f2f"; // Czerwone
+        } else {
+            ctx.fillStyle = "#1a1a1a"; // Czarne
+        }
         ctx.fill();
+
+        // Delikatna złota linia oddzielająca przedziały
+        ctx.strokeStyle = "rgba(218, 165, 32, 0.3)";
+        ctx.lineWidth = 1;
         ctx.stroke();
 
+        // Pisanie numerów na tarczy
         ctx.save();
-        ctx.translate(150,150);
-        ctx.rotate(start + step/2);
+        ctx.translate(cx, cy);
+        ctx.rotate(startRad + step / 2);
         ctx.fillStyle = "white";
-        ctx.fillText(i, 110, 5);
+        ctx.font = "bold 13px Arial";
+        ctx.shadowBlur = 2;
+        ctx.shadowColor = "black";
+        ctx.fillText(currentNum, outerRadius - 25, 5);
         ctx.restore();
     }
 
-    // 🎯 marker (piłka)
+    // 3. Wewnętrzny złoty stożek środkowy ruletki
+    let centerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, innerRadius - 20);
+    centerGrad.addColorStop(0, '#fff3a8');
+    centerGrad.addColorStop(0.4, 'gold');
+    centerGrad.addColorStop(1, '#8a6400');
+
     ctx.beginPath();
-    ctx.arc(150, 30, 6, 0, Math.PI*2);
-    ctx.fillStyle = "white";
+    ctx.arc(cx, cy, innerRadius - 20, 0, Math.PI * 2);
+    ctx.fillStyle = centerGrad;
     ctx.fill();
+
+    // Środkowy bolec tarczy
+    ctx.beginPath();
+    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+    ctx.fillStyle = "#4a3500";
+    ctx.fill();
+
+    // 4. Fizyczny marker na samej górze (Złota strzałka wskazująca wygraną)
+    ctx.fillStyle = "gold";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, 5);
+    ctx.lineTo(cx - 12, 25);
+    ctx.lineTo(cx + 12, 25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 5. Dynamiczna biała kulka
+    let bx = cx + Math.cos(ballAngle) * ballRadius;
+    let by = cy + Math.sin(ballAngle) * ballRadius;
+
+    ctx.beginPath();
+    ctx.arc(bx, by, 8, 0, Math.PI * 2);
+    
+    // Cieniowanie kulki, żeby wyglądała jak 3D
+    let ballGrad = ctx.createRadialGradient(bx - 2, by - 2, 1, bx, by, 8);
+    ballGrad.addColorStop(0, '#ffffff');
+    ballGrad.addColorStop(0.8, '#e0e0e0');
+    ballGrad.addColorStop(1, '#9e9e9e');
+    
+    ctx.fillStyle = ballGrad;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.fill();
+    ctx.shadowBlur = 0; // reset cieniowania dla innych elementów
 }
 
 function saveMoney() {
@@ -125,48 +261,100 @@ function saveMoney() {
 
 function spin() {
     if (spinning) return;
-    spinning = true;
 
     let betType = document.getElementById("betType").value;
     let betAmount = parseInt(document.getElementById("betAmount").value);
     let betNumber = parseInt(document.getElementById("betNumber").value);
 
+    if (isNaN(betAmount) || betAmount <= 0) {
+        alert("Wpisz poprawną stawkę!");
+        return;
+    }
+    if (betType === "number" && (isNaN(betNumber) || betNumber < 0 || betNumber > 36)) {
+        alert("Wybierz numer od 0 do 36!");
+        return;
+    }
     if (betAmount > money) {
-        document.getElementById("result").innerText = "❌ Brak kasy";
-        spinning = false;
+        document.getElementById("result").innerText = "❌ Brak kasy w portfelu!";
         return;
     }
 
+    spinning = true;
+    document.getElementById("spinBtn").disabled = true;
+    
     money -= betAmount;
     saveMoney();
 
-    let target = Math.floor(Math.random() * 37);
+    document.getElementById("result").innerText = "🔮 Krupier rzuca kulkę...";
 
-    let duration = 5000; // ⬅️ DŁUŻSZA ANIMACJA
-    let start = null;
+    // Losowanie numeru docelowego
+    let targetNumber = Math.floor(Math.random() * 37);
+    
+    // Znajdujemy pozycję tego numeru w tablicy koła ruletki
+    let targetIndex = rouletteOrder.indexOf(targetNumber);
+    const step = (Math.PI * 2) / rouletteOrder.length;
 
-    let startAngle = angle;
-    let endAngle = startAngle + (Math.PI * 10) + (target * (2*Math.PI/37));
+    let duration = 5000; // Czas trwania pełnej animacji w ms
+    let startTime = null;
+
+    // Kąty początkowe
+    let startWheelAngle = wheelAngle % (Math.PI * 2);
+    
+    // Obliczamy finalny kąt koła tak, aby wylosowany slot trafił idealnie na godzinę 12:00 (-Math.PI / 2)
+    let desiredFacingAngle = -Math.PI / 2 - (targetIndex * step) - (step / 2);
+    let extraTurnsWheel = Math.PI * 2 * 4; // Koło zrobi pełne 4 obroty w prawo
+    let endWheelAngle = startWheelAngle + extraTurnsWheel + (desiredFacingAngle - startWheelAngle);
+
+    // Konfiguracja niezależnej kulki
+    let startBallAngle = ballAngle % (Math.PI * 2);
+    // Kulka leci w lewo (w przeciwną stronę), robiąc dużo obrotów
+    let extraTurnsBall = -Math.PI * 2 * 7; 
 
     function animate(time) {
-        if (!start) start = time;
-        let progress = (time - start) / duration;
+        if (!startTime) startTime = time;
+        let progress = (time - startTime) / duration;
 
         if (progress > 1) progress = 1;
 
-        // ease-out
-        let ease = 1 - Math.pow(1 - progress, 3);
+        // Zaawansowane hamowanie koła (Ease-Out Cubic)
+        let easeWheel = 1 - Math.pow(1 - progress, 3);
+        wheelAngle = startWheelAngle + (endWheelAngle - startWheelAngle) * easeWheel;
 
-        angle = startAngle + (endAngle - startAngle) * ease;
+        // Animacja kulki oparta na fazach
+        if (progress < 0.7) {
+            // Faza 1: Kulka pędzi po zewnętrznym torze (promień 160) w drugą stronę
+            ballRadius = 160;
+            ballAngle = startBallAngle + extraTurnsBall * progress;
+        } else {
+            // Faza 2: Kulka zwalnia, wpada do środka i ląduje w slocie
+            let subProgress = (progress - 0.7) / 0.3; // od 0 do 1 w ostatniej fazie
+            let easeBallDrop = Math.sin(subProgress * Math.PI / 2); // płynne opadanie
+            
+            // Promień maleje z zewnętrznego toru do poziomu slotów (140)
+            ballRadius = 160 - (160 - 142) * easeBallDrop;
+            
+            // Obliczamy aktualną pozycję środka wylosowanego slotu na poruszającym się kole
+            let targetSlotAngle = wheelAngle + targetIndex * step + step / 2;
+            
+            // Przed zatrzymaniem dodajemy mały efekt odbijania (bouncing) za pomocą funkcji Cosinus
+            if (progress < 0.95) {
+                targetSlotAngle += Math.cos(subProgress * Math.PI * 5) * 0.05 * (1 - subProgress);
+            }
 
-        ctx.clearRect(0,0,300,300);
+            // Płynnie łączymy wolny bieg kulki z pozycją slotu na kole
+            let ballAngleAtPhaseStart = startBallAngle + extraTurnsBall * 0.7;
+            ballAngle = ballAngleAtPhaseStart + (targetSlotAngle - ballAngleAtPhaseStart) * easeBallDrop;
+        }
+
         drawWheel();
 
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
-            finishSpin(target, betType, betAmount, betNumber);
+            // Koniec animacji - podsumowanie wyników
+            finishSpin(targetNumber, betType, betAmount, betNumber);
             spinning = false;
+            document.getElementById("spinBtn").disabled = false;
         }
     }
 
@@ -176,27 +364,26 @@ function spin() {
 function finishSpin(result, betType, betAmount, betNumber) {
     const isRed = redNumbers.includes(result);
     let win = false;
+    let colorName = result === 0 ? "GREEN" : (isRed ? "RED" : "BLACK");
 
     if (betType === "red" && isRed && result !== 0) win = true;
     if (betType === "black" && !isRed && result !== 0) win = true;
     if (betType === "number" && betNumber === result) win = true;
 
+    let resultDiv = document.getElementById("result");
+
     if (win) {
         let payout = betAmount * (betType === "number" ? 35 : 2);
         money += payout;
-
-        document.getElementById("result").innerText =
-            `🔥 WIN! ${result} (${isRed ? "RED" : "BLACK"}) +${payout}`;
+        resultDiv.innerHTML = `<span style="color: lime;">🔥 WYGRANA! Wypadło: ${result} (${colorName}) +${payout}$</span>`;
     } else {
-        document.getElementById("result").innerText =
-            `💀 LOSE! ${result} (${isRed ? "RED" : "BLACK"})`;
+        resultDiv.innerHTML = `<span style="color: #ff3333;">💀 PRZEGRANA! Wypadło: ${result} (${colorName})</span>`;
     }
 
     saveMoney();
 }
 
-// init
-ctx.font = "12px Arial";
+// Pierwsze uruchomienie tarczy
 drawWheel();
 </script>
 
