@@ -148,9 +148,9 @@ button:hover{
         <b>Zasady:</b>
 
         <ul>
-            <li>5 takich samych = JACKPOT</li>
-            <li>4 takich samych = duża wygrana</li>
-            <li>3 takich samych = mała wygrana</li>
+            <li>5 takich samych = JACKPOT 300k</li>
+            <li>4 takich samych = duża wygrana 10k</li>
+            <li>3 takich samych = mała wygrana 7k</li>
             <li>mniej = przegrana</li>
             <li>pięć 🟪 = giga JACKPOT 1mln </li>
         </ul>
@@ -262,65 +262,81 @@ localStorage.setItem("money", money);
 function checkWin(finalSymbols){
 
     let result = document.getElementById("result");
-
-    // liczenie symboli
     let counts = {};
 
     finalSymbols.forEach(symbol => {
-
-        if(counts[symbol]){
-            counts[symbol]++;
-        }
-        else{
-            counts[symbol] = 1;
-        }
-
+        counts[symbol] = (counts[symbol] || 0) + 1;
     });
 
     let max = Math.max(...Object.values(counts));
+    let bestSymbol = Object.keys(counts).find(k => counts[k] === max);
 
-    // 5 takich samych
-    if(max == 5){
+    let payout = 0;
+    let text = "";
+    let className = "lose";
 
-        money += 300000;
+    // 🧨 SCALING SYSTEM 3–10
+    if (max >= 3) {
 
-        result.innerHTML = "🔥 JACKPOT +30000$";
-        result.className = "win";
-        if(finalSymbols.every(s => s === "🟪")){
-            money += 1000000;
+        if (max === 3) {
+            payout = 7000;
+            text = "🎉 TRIPLE WIN +7K";
         }
+
+        else if (max === 4) {
+            payout = 20000;
+            text = "💎 QUAD WIN +20K";
+        }
+
+        else if (max === 5) {
+            payout = 300000;
+            text = "🔥 JACKPOT +300K";
+        }
+
+        else if (max === 6) {
+            payout = 1000000;
+            text = "🚀 MEGA JACKPOT +1M";
+        }
+
+        else if (max === 7) {
+            payout = 5000000;
+            text = "🌌 ULTRA JACKPOT +5M";
+        }
+
+        else if (max === 8) {
+            payout = 20000000;
+            text = "💀 GODLIKE WIN +20M";
+        }
+
+        else if (max === 9) {
+            payout = 50000000;
+            text = "👑 LEGENDARY JACKPOT +50M";
+        }
+
+        else if (max === 10) {
+            payout = 100000000;
+            text = "🔥 INFINITE GOD WIN +100M";
+        }
+
+        className = "win";
+    }
+    else {
+        text = "❌ NIC NIE WYGRAŁEŚ";
+        className = "lose";
     }
 
-    // 4 takie same
-    else if(max == 4){
-
-        money += 10000;
-
-        result.innerHTML = "💎 BIG WIN +10000$";
-        result.className = "win";
-
+    // 🟪 BONUS LAYER (special symbol)
+    if (bestSymbol === "🟪" && max >= 5) {
+        payout += 1000000;
+        text += " + 🟪 BONUS +1M";
     }
 
-    // 3 takie same
-    else if(max == 3){
+    money += payout;
 
-        money += 7000;
-
-        result.innerHTML = "🎉 WYGRANA +7000$";
-        result.className = "win";
-
-    }
-
-    // przegrana
-    else{
-
-        result.innerHTML = "❌ Nic nie wygrałeś";
-        result.className = "lose";
-
-    }
+    result.innerHTML = text;
+    result.className = className;
 
     document.getElementById("money").innerText = money;
-
 }
 
 </script>

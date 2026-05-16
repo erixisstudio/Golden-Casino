@@ -7,7 +7,7 @@
 <style>
 body {
     margin: 0;
-    background:#45bd4f;
+    background: #0f5132;
     color: white;
     font-family: Arial;
     text-align: center;
@@ -17,6 +17,7 @@ canvas {
     background: #145c43;
     border-radius: 50%;
     margin-top: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 .controls {
@@ -27,18 +28,31 @@ button, select, input {
     padding: 10px;
     font-size: 16px;
     margin: 5px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    background: gold;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 #money {
-    font-size: 22px;
+    font-size: 24px;
     color: gold;
+}
+
+#result {
+    margin-top: 15px;
+    font-size: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Roulette</h1>
+<h1>🎰 Roulette</h1>
 
 <div id="money">💰 0</div>
 
@@ -52,7 +66,6 @@ button, select, input {
     </select>
 
     <input type="number" id="betAmount" value="100" min="1">
-
     <input type="number" id="betNumber" placeholder="0-36">
 
     <br>
@@ -62,9 +75,7 @@ button, select, input {
 
 <div id="result">Wybierz zakład</div>
 
-<a href="index.html">dom</a>
 <script>
-
 let money = parseInt(localStorage.getItem("money")) || 1000;
 document.getElementById("money").innerText = "💰 " + money;
 
@@ -72,15 +83,12 @@ const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 
 const numbers = Array.from({length: 37}, (_, i) => i);
-let angle = 0;
-document.addEventListener("DOMContentLoaded", function() {
-    let money = parseInt(localStorage.getItem("money")) || 1000;
-    document.getElementById("money").innerText = money;
-});
 const redNumbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 
+let angle = 0;
+let spinning = false;
+
 function drawWheel() {
-localStorage.setItem("money", money);
     const radius = 140;
     const step = (Math.PI * 2) / numbers.length;
 
@@ -91,9 +99,7 @@ localStorage.setItem("money", money);
         ctx.moveTo(150,150);
         ctx.arc(150,150,radius,start,start+step);
 
-        ctx.fillStyle = redNumbers.includes(i) ? "#b30000" : "#111";
-        if (i === 0) ctx.fillStyle = "green";
-
+        ctx.fillStyle = i === 0 ? "green" : (redNumbers.includes(i) ? "#b30000" : "#111");
         ctx.fill();
         ctx.stroke();
 
@@ -104,6 +110,12 @@ localStorage.setItem("money", money);
         ctx.fillText(i, 110, 5);
         ctx.restore();
     }
+
+    // 🎯 marker (piłka)
+    ctx.beginPath();
+    ctx.arc(150, 30, 6, 0, Math.PI*2);
+    ctx.fillStyle = "white";
+    ctx.fill();
 }
 
 function saveMoney() {
@@ -112,6 +124,8 @@ function saveMoney() {
 }
 
 function spin() {
+    if (spinning) return;
+    spinning = true;
 
     let betType = document.getElementById("betType").value;
     let betAmount = parseInt(document.getElementById("betAmount").value);
@@ -119,41 +133,49 @@ function spin() {
 
     if (betAmount > money) {
         document.getElementById("result").innerText = "❌ Brak kasy";
+        spinning = false;
         return;
     }
 
     money -= betAmount;
+    saveMoney();
 
-    let spins = 60 + Math.floor(Math.random() * 40);
     let target = Math.floor(Math.random() * 37);
 
-    let i = 0;
+    let duration = 5000; // ⬅️ DŁUŻSZA ANIMACJA
+    let start = null;
 
-    function animate() {
-        angle += 0.1;
+    let startAngle = angle;
+    let endAngle = startAngle + (Math.PI * 10) + (target * (2*Math.PI/37));
+
+    function animate(time) {
+        if (!start) start = time;
+        let progress = (time - start) / duration;
+
+        if (progress > 1) progress = 1;
+
+        // ease-out
+        let ease = 1 - Math.pow(1 - progress, 3);
+
+        angle = startAngle + (endAngle - startAngle) * ease;
+
         ctx.clearRect(0,0,300,300);
         drawWheel();
 
-        i++;
-        if (i < spins) {
+        if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
             finishSpin(target, betType, betAmount, betNumber);
+            spinning = false;
         }
     }
 
-    saveMoney();
-    animate();
+    requestAnimationFrame(animate);
 }
-document.addEventListener("DOMContentLoaded", function() {
-    let money = parseInt(localStorage.getItem("money")) || 1000;
-    document.getElementById("money").innerText = money;
-});
+
 function finishSpin(result, betType, betAmount, betNumber) {
-
-    let win = false;
-
     const isRed = redNumbers.includes(result);
+    let win = false;
 
     if (betType === "red" && isRed && result !== 0) win = true;
     if (betType === "black" && !isRed && result !== 0) win = true;
@@ -162,11 +184,12 @@ function finishSpin(result, betType, betAmount, betNumber) {
     if (win) {
         let payout = betAmount * (betType === "number" ? 35 : 2);
         money += payout;
+
         document.getElementById("result").innerText =
-            "🔥 WYGRAŁEŚ! liczba: " + result + " +" + payout;
+            `🔥 WIN! ${result} (${isRed ? "RED" : "BLACK"}) +${payout}`;
     } else {
         document.getElementById("result").innerText =
-            "💀 Przegrałeś! liczba: " + result;
+            `💀 LOSE! ${result} (${isRed ? "RED" : "BLACK"})`;
     }
 
     saveMoney();
@@ -175,7 +198,6 @@ function finishSpin(result, betType, betAmount, betNumber) {
 // init
 ctx.font = "12px Arial";
 drawWheel();
-
 </script>
 
 </body>
