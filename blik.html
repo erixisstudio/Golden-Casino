@@ -1,127 +1,54 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<title>BLIK Steam Style</title>
-
-<style>
-body {
-    font-family: Arial;
-    background: #0b3d2e;
-    color: white;
-    text-align: center;
-    padding: 30px;
-}
-
-.money {
-    font-size: 22px;
-    color: gold;
-    margin-bottom: 20px;
-}
-
-button {
-    padding: 10px 20px;
-    margin: 10px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.overlay {
-    position: fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background: rgba(0,0,0,0.7);
-    display:none;
-    justify-content:center;
-    align-items:center;
-}
-
-.popup {
-    background:#145c43;
-    padding:20px;
-    border-radius:10px;
-    width:300px;
-}
-
-input {
-    width:90%;
-    padding:10px;
-    margin:5px;
-    font-size:16px;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>Golden Casino - Doładowanie</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #fff; display: flex; justify-content: center; padding: 20px; }
+        .panel { background: #2d2d2d; padding: 20px; border-radius: 10px; width: 300px; text-align: center; border: 2px solid #ffd700; }
+        input { width: 80%; padding: 10px; margin: 10px 0; border: none; border-radius: 5px; }
+        button { background: #00ff00; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        #status { margin-top: 15px; font-size: 0.9em; }
+    </style>
 </head>
-
 <body>
 
-<h1>🛒 Steam Checkout (BLIK fake)</h1>
-
-<div class="money">💰 <span id="money">0</span></div>
-
-<button onclick="openBlik()">💳 Zapłać BLIK</button>
-
-<div class="overlay" id="overlay">
-    <div class="popup">
-
-        <h2>💳 BLIK Payment</h2>
-
-        <input maxlength="5" id="code" placeholder="Wpisz 5-cyfrowy kod">
-        <input id="amount" type="number" placeholder="Kwota">
-
-        <button onclick="pay()">Zatwierdź</button>
-        <button onclick="closeBlik()">Zamknij</button>
-
-        <div id="result"></div>
-
-    </div>
+<div class="panel">
+    <h2>Golden Casino - Doładuj</h2>
+    <p>Twoje saldo: <span id="displayMoney">0.00</span> PLN</p>
+    
+    <input type="number" id="amount" placeholder="Kwota doładowania">
+    <input type="text" id="blikCode" placeholder="Kod BLIK (6 cyfr)">
+    
+    <button onclick="dodajSrodki()">Zasil konto</button>
+    <div id="status"></div>
 </div>
 
 <script>
+    // Ładowanie kasy przy starcie
+    let money = parseFloat(localStorage.getItem("money")) || 0;
+    document.getElementById("displayMoney").innerText = money.toFixed(2);
 
-let money = parseInt(localStorage.getItem("money")) || 1000;
-document.getElementById("money").innerText = money;
+    function dodajSrodki() {
+        const kwota = parseFloat(document.getElementById("amount").value);
+        const kodInput = document.getElementById("blikCode").value;
+        const status = document.getElementById("status");
 
-function save() {
-    localStorage.setItem("money", money);
-    document.getElementById("money").innerText = money;
-}
-
-function openBlik() {
-    document.getElementById("overlay").style.display = "flex";
-}
-
-function closeBlik() {
-    document.getElementById("overlay").style.display = "none";
-}
-
-function pay() {
-
-    let code = document.getElementById("code").value;
-    let amount = parseInt(document.getElementById("amount").value);
-
-    // 🔐 walidacja kodu (tylko format jak BLIK)
-    if (!/^\d{5}$/.test(code)) {
-        document.getElementById("result").innerText = "❌ Kod musi mieć 5 cyfr";
-        return;
+        // Walidacja: 6 cyfr i kwota musi być większa od 0
+        if (kodInput.length === 6 && kwota > 0) {
+            money += kwota; // Teraz dodajemy hajs!
+            localStorage.setItem("money", money);
+            document.getElementById("displayMoney").innerText = money.toFixed(2);
+            
+            status.style.color = "#00ff00";
+            status.innerText = "Doładowano pomyślnie!";
+        } else {
+            status.style.color = "#ff4444";
+            status.innerText = "Błędny kod lub kwota!";
+        }
     }
-
-    if (!amount || amount <= 0) {
-        document.getElementById("result").innerText = "❌ Zła kwota";
-        return;
-    }
-
-    money += amount;
-
-    document.getElementById("result").innerText =
-        "🔥 Dodano +" + amount + "$";
-
-    save();
-}
-
 </script>
 
-<a href="index.html">dom</a>
+<a style="margin-top: 20px;text-decoration: none; color: white;background: rgba(0,0,0,0.5);padding: 8px 15px;border-radius: 5px;font-size: 14px;" href="index.html">← Powrót do domu</a>
 </body>
 </html>

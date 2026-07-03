@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Texas Hold'em Tournament - Golden Casino</title>
+<style>
+body {
+    margin: 0;
+    background: #1a472a;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+.poker-table {
+    width: 900px;
+    height: 500px;
+    background: #256b40;
+    border: 20px solid #5c2c16;
+    border-radius: 250px;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+    margin-bottom: 20px;
+}
+#money {
+    font-size: 24px;
+    color: gold;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.pot-display {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.6);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 20px;
+    color: #00ffcc;
+    font-weight: bold;
+    border: 2px solid #00ffcc;
+}
+.community-cards {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 8px;
+    min-width: 260px;
+    justify-content: center;
+}
+.player-slot {
+    position: absolute;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    width: 140px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+.p1-you   { bottom: 15px; left: 50%; transform: translateX(-50%); border: 2px solid gold; }
+.p2-bot   { left: 20px; top: 50%; transform: translateY(-50%); }
+.p3-bot   { top: 15px; left: 50%; transform: translateX(-50%); }
+.p4-bot   { right: 20px; top: 50%; transform: translateY(-50%); }
+
+.card-container {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 5px;
+    min-height: 65px;
+}
+.card {
+    width: 45px;
+    height: 65px;
+    background: white;
+    color: black;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+}
+.card.red { color: red; }
+.card.back {
+    background: linear-gradient(135deg, #aa0000, #550000);
+    color: white;
+}
+.status-tag {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 3px;
+    font-weight: bold;
+}
+.player-chips {
+    font-size: 13px;
+    color: gold;
+    font-weight: bold;
+}
+.controls {
+    background: #2b2b2b;
+    padding: 15px 30px;
+    border-radius: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    background: gold;
+    color: black;
+}
+button:hover:not(:disabled) { transform: scale(1.05); }
+button:disabled { background: #555; color: #888; cursor: not-allowed; }
+#logText {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    min-height: 25px;
+    text-align: center;
+}
+.budget-info {
+    font-size: 14px;
+    color: #00ffcc;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>🃏 Golden Texas Hold'em Tournament</h1>
+<div id="money">💰 <span id="myMoney">100000</span>$</div>
+
+<div class="budget-info" id="tourneyInfo" style="display:none;">
+    Turniej z budżetem: <span id="displayBudget">0</span>$ | Blind (10%): <span id="displayBlind">0</span>$
+</div>
+
+<div class="poker-table">
+    <div class="pot-display">POT: <span id="potValue">0</span>$</div>
+    <div class="community-cards" id="communityZone"></div>
+
+    <div class="player-slot p1-you">
+        <div style="color: gold; font-weight: bold;">YOU (P1)</div>
+        <div class="player-chips" id="p1Chips">0$</div>
+        <div id="p1Bet" style="font-size:11px; color:#0f6;">Bet: 0$</div>
+        <div class="card-container" id="p1Cards"></div>
+        <div class="status-tag" id="p1Status">Czeka...</div>
+    </div>
+
+    <div class="player-slot p2-bot">
+        <div>Bot Janusz</div>
+        <div class="player-chips" id="p2Chips">0$</div>
+        <div id="p2Bet" style="font-size:11px; color:#0f6;">Bet: 0$</div>
+        <div class="card-container" id="p2Cards"></div>
+        <div class="status-tag" id="p2Status">Czeka...</div>
+    </div>
+
+    <div class="player-slot p3-bot">
+        <div>Bot Seba</div>
+        <div class="player-chips" id="p3Chips">0$</div>
+        <div id="p3Bet" style="font-size:11px; color:#0f6;">Bet: 0$</div>
+        <div class="card-container" id="p3Cards"></div>
+        <div class="status-tag" id="p3Status">Czeka...</div>
+    </div>
+
+    <div class="player-slot p4-bot">
+        <div>Bot Mirek</div>
+        <div class="player-chips" id="p4Chips">0$</div>
+        <div id="p4Bet" style="font-size:11px; color:#0f6;">Bet: 0$</div>
+        <div class="card-container" id="p4Cards"></div>
+        <div class="status-tag" id="p4Status">Czeka...</div>
+    </div>
+</div>
+
+<div class="controls">
+    <div id="setupPhase">
+        <span style="font-weight: bold; color: white;">Budżet na całą grę ($): </span>
+        <input type="number" id="tournamentBudget" value="100000" min="1000" style="width: 100px; text-align: center; padding: 5px; border-radius: 5px; font-weight: bold;">
+        <button onclick="startTournament()">Rozpocznij Turniej</button>
+    </div>
+
+    <div id="nextRoundPhase" style="display: none;">
+        <button onclick="startNextRound()" style="background: #00ffcc;">Kolejne Rozdanie</button>
+    </div>
+
+    <div id="actionPhase" style="display: none;">
+        <button id="btnCheck" onclick="playerAction('check')">CHECK / CALL</button>
+        
+        <span style="margin-left: 10px; font-weight: bold;">Raise Amount: </span>
+        <input type="number" id="customRaise" value="2000" min="100" style="width: 80px; text-align: center; padding: 5px; border-radius: 5px; font-weight: bold;">
+        <button id="btnRaise" onclick="playerAction('raise')" style="background: #ff5722; color:white;">RAISE</button>
+        
+        <button id="btnFold" onclick="playerAction('fold')" style="background: #777; color:white;">FOLD</button>
+    </div>
+</div>
+
+<div id="logText">Wpisz z jakim hajsem wchodzisz na stół i kliknij "Rozpocznij Turniej"!</div>
+
+<a style="margin-top: 20px; text-decoration: none; color: white; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px; font-size: 14px;" href="index.html">← Powrót do menu</a>
+
+<script>
+let globalMoney = parseInt(localStorage.getItem("money")) || 1000000;
+document.getElementById("myMoney").innerText = globalMoney;
+
+let deck = [];
+let communityCards = [];
+let pot = 0;
+let currentMaxBet = 0;
+let gameStage = 0; 
+
+let startBudget = 0;
+let blindAmount = 0;
+let tournamentActive = false;
+
+let players = [
+    { id: 1, name: "YOU", chips: 0, cards: [], bet: 0, folded: false, out: false, isBot: false, allIn: false },
+    { id: 2, name: "Janusz", chips: 0, cards: [], bet: 0, folded: false, out: false, isBot: true, allIn: false },
+    { id: 3, name: "Seba", chips: 0, cards: [], bet: 0, folded: false, out: false, isBot: true, allIn: false },
+    { id: 4, name: "Mirek", chips: 0, cards: [], bet: 0, folded: false, out: false, isBot: true, allIn: false }
+];
+
+const suits = [{s:'♠', r:false}, {s:'♥', r:true}, {s:'♦', r:true}, {s:'♣', r:false}];
+const values = [
+    {n:'2', v:2}, {n:'3', v:3}, {n:'4', v:4}, {n:'5', v:5}, {n:'6', v:6},
+    {n:'7', v:7}, {n:'8', v:8}, {n:'9', v:9}, {n:'10', v:10}, {n:'J', v:11},
+    {n:'Q', v:12}, {n:'K', v:13}, {n:'A', v:14}
+];
+
+function createDeck() {
+    deck = [];
+    for(let s of suits) {
+        for(let v of values) {
+            deck.push({...v, suit: s.s, red: s.r});
+        }
+    }
+    for (let i = deck.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+}
+
+// Funkcja uruchamiana tylko raz na początku całego turnieju
+function startTournament() {
+    let budgetInput = document.getElementById("tournamentBudget").value;
+    startBudget = parseInt(budgetInput);
+
+    if(isNaN(startBudget) || startBudget <= 0) return;
+    if(globalMoney < startBudget) {
+        alert("Nie masz tyle kasy w głównym portfelu!");
+        return;
+    }
+
+    globalMoney -= startBudget;
+    localStorage.setItem("money", globalMoney);
+    document.getElementById("myMoney").innerText = globalMoney;
+
+    blindAmount = startBudget * 0.10; // Auto obliczanie 10%
+    tournamentActive = true;
+
+    document.getElementById("displayBudget").innerText = startBudget;
+    document.getElementById("displayBlind").innerText = blindAmount;
+    document.getElementById("tourneyInfo").style.display = "block";
+
+    players.forEach(p => {
+        p.chips = startBudget;
+        p.out = false;
+        p.cards = [];
+        p.allIn = false;
+    });
+
+    document.getElementById("setupPhase").style.display = "none";
+    
+    // Zaczynamy pierwszą rundę z opóźnieniem, żeby było wyraźnie widać
+    document.getElementById("logText").innerText = "Rozpoczynamy turniej! Krupier szykuje karty...";
+    updateTableUI(true);
+    
+    setTimeout(startNextRound, 1500);
+}
+
+// Funkcja uruchamiana co każde nowe rozdanie
+function startNextRound() {
+    let activeTournamentPlayers = players.filter(p => !p.out);
+    
+    if(activeTournamentPlayers.length === 1 && !players[0].out) {
+        let wygrana = pot + players[0].chips; 
+        globalMoney += wygrana;
+        localStorage.setItem("money", globalMoney);
+        document.getElementById("myMoney").innerText = globalMoney;
+        alert("Wygrałeś cały turniej! Twoja nagroda trafia do głównego portfela.");
+        resetTournament();
+        return;
+    } else if(players[0].out) {
+        alert("Odpadłeś z turnieju! Zbankrutowałeś.");
+        resetTournament();
+        return;
+    }
+
+    createDeck();
+    pot = 0;
+    communityCards = [];
+    currentMaxBet = blindAmount; // Startowy zakład to zawsze nasz 10% blind
+    gameStage = 0;
+    
+    document.getElementById("nextRoundPhase").style.display = "none";
+    document.getElementById("actionPhase").style.display = "none";
+    document.getElementById("communityZone").innerHTML = "";
+    document.getElementById("logText").innerText = `Krupier pobiera 10% blinda (${blindAmount}$) od każdego gracza...`;
+
+    // Pobieranie wpisowego (10%) lub robienie automatycznego ALL IN
+    players.forEach(p => {
+        p.bet = 0;
+        p.folded = false;
+        p.allIn = false;
+        
+        if(!p.out) {
+            if (p.chips <= blindAmount) {
+                // Gracz ma mniej niż blind - AUTO ALL IN!
+                p.bet = p.chips;
+                pot += p.chips;
+                p.chips = 0;
+                p.allIn = true;
+                document.getElementById("p" + p.id + "Status").innerText = "AUTO ALL-IN 🚨";
+                document.getElementById("p" + p.id + "Status").style.color = "red";
+            } else {
+                // Normalne pobranie 10%
+                p.chips -= blindAmount;
+                p.bet = blindAmount;
+                pot += blindAmount;
+                document.getElementById("p" + p.id + "Status").innerText = "BLIND (-10%)";
+                document.getElementById("p" + p.id + "Status").style.color = "orange";
+            }
+        } else {
+            p.folded = true;
+            document.getElementById("p" + p.id + "Status").innerText = "OUT";
+            document.getElementById("p" + p.id + "Status").style.color = "gray";
+        }
+    });
+
+    updateTableUI(true);
+
+    // Opóźnienie na rozdanie kart (powoli i wyraźnie)
+    setTimeout(() => {
+        document.getElementById("logText").innerText = "Krupier rozdaje karty...";
+        players.forEach(p => {
+            if(!p.out) p.cards = [deck.pop(), deck.pop()];
+        });
+        updateTableUI(true);
+
+        setTimeout(() => {
+            document.getElementById("logText").innerText = "Twój ruch! Co robisz?";
+            
+            // Jeżeli gracz ma All-in, od razu pomijamy jego turę i lecą boty
+            if(players[0].allIn) {
+                document.getElementById("logText").innerText = "Jesteś ALL IN! Oglądasz co zrobią inni...";
+                setTimeout(() => { executeBotSequentially(1); }, 2000);
+            } else {
+                document.getElementById("actionPhase").style.display = "flex";
+                document.getElementById("actionPhase").querySelectorAll("button").forEach(b => b.disabled = false);
+            }
+        }, 1500);
+
+    }, 2000);
+}
+
+function renderCardObj(card, hidden=false) {
+    let div = document.createElement("div");
+    if(hidden) {
+        div.className = "card back";
+        div.innerText = "🂠";
+    } else {
+        div.className = "card" + (card.red ? " red" : "");
+        div.innerText = card.n + card.suit;
+    }
+    return div;
+}
+
+function updateTableUI(hideBotCards = true) {
+    document.getElementById("potValue").innerText = pot;
+
+    players.forEach(p => {
+        let cardZone = document.getElementById("p" + p.id + "Cards");
+        let statusTag = document.getElementById("p" + p.id + "Status");
+        let betTag = document.getElementById("p" + p.id + "Bet");
+        let chipsTag = document.getElementById("p" + p.id + "Chips");
+        
+        cardZone.innerHTML = "";
+        chipsTag.innerText = `${p.chips}$`;
+        betTag.innerText = `Bet: ${p.bet}$`;
+
+        if(p.out) {
+            statusTag.innerText = "OUT";
+            statusTag.style.color = "gray";
+        } else if(p.folded) {
+            statusTag.innerText = "FOLD ❌";
+            statusTag.style.color = "gray";
+        } else if(p.allIn) {
+            statusTag.innerText = "ALL IN 🚨";
+            statusTag.style.color = "red";
+        }
+
+        if(!p.out && !p.folded && p.cards.length > 0) {
+            p.cards.forEach(c => {
+                cardZone.appendChild(renderCardObj(c, p.isBot && hideBotCards));
+            });
+        }
+    });
+
+    let commZone = document.getElementById("communityZone");
+    commZone.innerHTML = "";
+    communityCards.forEach(c => {
+        commZone.appendChild(renderCardObj(c, false));
+    });
+}
+
+function playerAction(action) {
+    let p1 = players[0];
+    if(p1.folded || p1.out || p1.allIn) return;
+
+    document.getElementById("actionPhase").querySelectorAll("button").forEach(b => b.disabled = true);
+
+    if(action === 'fold') {
+        p1.folded = true;
+        document.getElementById("p1Status").innerText = "FOLD ❌";
+        document.getElementById("p1Status").style.color = "gray";
+        document.getElementById("logText").innerText = "Pasujesz. Boty dogrywają rundę...";
+        setTimeout(runRemainingStages, 1500);
+        return;
+    }
+    else if(action === 'raise') {
+        let raiseInput = document.getElementById("customRaise");
+        let raiseAmount = parseInt(raiseInput.value);
+
+        if(isNaN(raiseAmount) || raiseAmount <= 0 || p1.chips < raiseAmount) {
+            document.getElementById("actionPhase").querySelectorAll("button").forEach(b => b.disabled = false);
+            return;
+        }
+
+        p1.chips -= raiseAmount;
+        p1.bet += raiseAmount;
+        pot += raiseAmount;
+        currentMaxBet = p1.bet;
+        
+        if (p1.chips === 0) p1.allIn = true;
+
+        document.getElementById("p1Status").innerText = `RAISE (+${raiseAmount}$) 🚀`;
+        document.getElementById("p1Status").style.color = "orange";
+        document.getElementById("logText").innerText = `Podbiłeś o ${raiseAmount}$!`;
+    } 
+    else if(action === 'check') {
+        let diff = currentMaxBet - p1.bet;
+        if(diff > 0) {
+            if(p1.chips <= diff) { 
+                // Gracz ma za mało na sprawdzenie, więc automatyczny All-In
+                pot += p1.chips;
+                p1.bet += p1.chips;
+                p1.chips = 0;
+                p1.allIn = true;
+                document.getElementById("p1Status").innerText = "ALL IN 🚨";
+                document.getElementById("p1Status").style.color = "red";
+                document.getElementById("logText").innerText = "Wrzuciłeś wszystko (All-In)!";
+            } else {
+                p1.chips -= diff;
+                p1.bet += diff;
+                pot += diff;
+                document.getElementById("p1Status").innerText = "CALL ✅";
+                document.getElementById("p1Status").style.color = "lightblue";
+                document.getElementById("logText").innerText = `Sprawdzasz (${diff}$)`;
+            }
+        } else {
+            document.getElementById("p1Status").innerText = "CHECK 🤝";
+            document.getElementById("p1Status").style.color = "yellow";
+            document.getElementById("logText").innerText = "Czekasz (Check).";
+        }
+    }
+
+    updateTableUI(true);
+    setTimeout(() => { executeBotSequentially(1); }, 1500);
+}
+
+function executeBotSequentially(botIndex) {
+    if (botIndex > 3) {
+        setTimeout(nextStage, 1500);
+        return;
+    }
+
+    let bot = players[botIndex];
+    let statusTag = document.getElementById("p" + bot.id + "Status");
+
+    // Pomijanie bota, który spasował, odpadł, lub jest już ALL IN
+    if (bot.folded || bot.out || bot.allIn) {
+        executeBotSequentially(botIndex + 1);
+        return;
+    }
+
+    document.getElementById("logText").innerText = `Bot ${bot.name} myśli...`;
+    statusTag.innerText = "Myśli...";
+    statusTag.style.color = "white";
+
+    setTimeout(() => {
+        let diff = currentMaxBet - bot.bet;
+        let rand = Math.random();
+
+        if (diff > 0) {
+            if (rand < 0.25) {
+                bot.folded = true;
+                statusTag.innerText = "FOLD ❌";
+                statusTag.style.color = "gray";
+                document.getElementById("logText").innerText = `Bot ${bot.name} pasuje.`;
+            } else if (bot.chips <= diff) {
+                // Bot nie ma kasy na pełen call, leci ALL IN
+                pot += bot.chips;
+                bot.bet += bot.chips;
+                bot.chips = 0;
+                bot.allIn = true;
+                statusTag.innerText = "ALL IN 🚨";
+                statusTag.style.color = "red";
+                document.getElementById("logText").innerText = `Bot ${bot.name} idzie ALL-IN!`;
+            } else {
+                bot.chips -= diff;
+                bot.bet += diff;
+                pot += diff;
+                statusTag.innerText = "CALL ✅";
+                statusTag.style.color = "lightblue";
+                document.getElementById("logText").innerText = `Bot ${bot.name} sprawdza.`;
+            }
+        } else {
+            if (rand < 0.20 && bot.chips >= blindAmount) {
+                let botRaise = blindAmount; // Bot podbija o stawkę blinda
+                bot.chips -= botRaise;
+                bot.bet += botRaise;
+                pot += botRaise;
+                currentMaxBet = bot.bet;
+                statusTag.innerText = "RAISE 🚀";
+                statusTag.style.color = "orange";
+                document.getElementById("logText").innerText = `Bot ${bot.name} podbija!`;
+            } else {
+                statusTag.innerText = "CHECK 🤝";
+                statusTag.style.color = "yellow";
+                document.getElementById("logText").innerText = `Bot ${bot.name} czeka.`;
+            }
+        }
+
+        updateTableUI(true);
+        setTimeout(() => { executeBotSequentially(botIndex + 1); }, 1800); // 1.8 sekundy przerwy między botami
+    }, 2000); // 2 sekundy "myślenia" bota
+}
+
+function nextStage() {
+    gameStage++;
+    
+    let activePlayers = players.filter(p => !p.folded && !p.out);
+    if(activePlayers.length === 1) {
+        declareSingleWinner(activePlayers[0]);
+        return;
+    }
+
+    if(gameStage === 1) {
+        communityCards.push(deck.pop(), deck.pop(), deck.pop());
+        document.getElementById("logText").innerText = "Krupier wykłada FLOP (3 karty)!";
+    } 
+    else if(gameStage === 2) {
+        communityCards.push(deck.pop());
+        document.getElementById("logText").innerText = "Krupier wykłada TURN (1 karta)!";
+    } 
+    else if(gameStage === 3) {
+        communityCards.push(deck.pop());
+        document.getElementById("logText").innerText = "Krupier wykłada RIVER (ostatnia karta)!";
+    } 
+    else if(gameStage === 4) {
+        resolveShowdown();
+        return;
+    }
+
+    updateTableUI(true);
+
+    setTimeout(() => {
+        // Zabezpieczenie: Jeśli Ty złożyłeś karty LUB jesteś all-in, to pomiń Twoją akcję
+        if (players[0].folded || players[0].allIn) {
+            executeBotSequentially(1);
+        } else {
+            document.getElementById("logText").innerText = "Twój ruch! Co robisz?";
+            document.getElementById("actionPhase").querySelectorAll("button").forEach(b => b.disabled = false);
+        }
+    }, 1500);
+}
+
+function runRemainingStages() {
+    while(gameStage < 3) {
+        if(gameStage === 0) communityCards.push(deck.pop(), deck.pop(), deck.pop());
+        else communityCards.push(deck.pop());
+        gameStage++;
+    }
+    resolveShowdown();
+}
+
+function declareSingleWinner(winner) {
+    document.getElementById("logText").innerHTML = `👑 Wszyscy spasowali! <strong>${winner.name}</strong> zgarnia pot <span style='color:gold;'>+${pot}$</span>!`;
+    winner.chips += pot;
+    checkBankruptcies();
+    setTimeout(endPokerRound, 3000);
+}
+
+function evaluateHandStrength(player, table) {
+    let allCards = [...player.cards, ...table];
+    let score = 0;
+    let counts = {};
+    allCards.forEach(c => { counts[c.v] = (counts[c.v] || 0) + 1; });
+    
+    let pairs = 0;
+    let triples = 0;
+    let highestCard = 0;
+
+    for(let v in counts) {
+        let val = parseInt(v);
+        if(val > highestCard) highestCard = val;
+        if(counts[v] === 2) pairs++;
+        if(counts[v] === 3) triples++;
+    }
+
+    if(triples > 0) score = 300 + highestCard; 
+    else if(pairs >= 2) score = 200 + highestCard; 
+    else if(pairs === 1) score = 100 + highestCard; 
+    else score = highestCard; 
+
+    return score;
+}
+
+function resolveShowdown() {
+    updateTableUI(false); // Odkrywamy karty botów
+
+    let bestScore = -1;
+    let winner = null;
+
+    players.forEach(p => {
+        if(!p.folded && !p.out) {
+            let strength = evaluateHandStrength(p, communityCards);
+            if(strength > bestScore) {
+                bestScore = strength;
+                winner = p;
+            }
+        }
+    });
+
+    if(winner) {
+        winner.chips += pot;
+        if(!winner.isBot) {
+            document.getElementById("logText").innerHTML = `🎉 <span style='color:lime;'>WYGRYWASZ ROZDANIE!</span> Zgarniasz <span style='color:gold;'>+${pot}$</span>!`;
+        } else {
+            document.getElementById("logText").innerHTML = `💀 <strong>Bot ${winner.name}</strong> ma lepsze karty i kradnie <span style='color:gold;'>${pot}$</span>!`;
+        }
+    }
+
+    checkBankruptcies();
+    setTimeout(endPokerRound, 4000); // 4 sekundy na analizę kto wygrał zanim przejdzie dalej
+}
+
+function checkBankruptcies() {
+    players.forEach(p => {
+        if(p.chips <= 0 && !p.out) {
+            p.chips = 0;
+            p.out = true;
+            document.getElementById("p" + p.id + "Status").innerText = "BANKRUT";
+        }
+    });
+}
+
+function resetTournament() {
+    tournamentActive = false;
+    document.getElementById("tourneyInfo").style.display = "none";
+    document.getElementById("setupPhase").style.display = "block";
+    document.getElementById("nextRoundPhase").style.display = "none";
+    document.getElementById("actionPhase").style.display = "none";
+    document.getElementById("logText").innerText = "Koniec! Zagraj jeszcze raz.";
+}
+
+function endPokerRound() {
+    players.forEach(p => p.bet = 0);
+    document.getElementById("actionPhase").style.display = "none";
+    
+    // Jeśli turniej wciąż trwa, pokazujemy przycisk kolejnego rozdania
+    if (tournamentActive) {
+        document.getElementById("nextRoundPhase").style.display = "block";
+        document.getElementById("logText").innerText = "Koniec rundy. Kliknij 'Kolejne Rozdanie', gdy będziesz gotowy.";
+    }
+}
+</script>
+</body>
+</html>

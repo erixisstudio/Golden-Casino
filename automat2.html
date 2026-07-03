@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volcano Slot - Golden Casino</title>
+<style>
+    body {
+        margin: 0;
+        background: radial-gradient(circle at center, #4a0000 0%, #1a0000 100%);
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        user-select: none;
+    }
+
+    #header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    #balance-display {
+        font-size: 28px;
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .jackpot-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .jp-box {
+        background: #000;
+        border: 2px solid;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .jp-grand { border-color: #ff00ff; color: #ff00ff; }
+    .jp-mega { border-color: #ffaa00; color: #ffaa00; }
+    .jp-major { border-color: #00ffcc; color: #00ffcc; }
+    .jp-mini { border-color: #ff4444; color: #ff4444; }
+
+    #slot-container {
+        background: rgba(0, 0, 0, 0.8);
+        border: 4px solid #ff4400;
+        padding: 10px;
+        border-radius: 15px;
+        box-shadow: 0 0 30px #ff440055;
+        position: relative;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 80px);
+        grid-template-rows: repeat(6, 80px);
+        gap: 5px;
+    }
+
+    .cell {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #333;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: bold;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cell.locked {
+        background: rgba(0, 0, 0, 0.9);
+        border: 1px solid #222;
+    }
+
+    .cell.locked::after {
+        content: '🔒';
+        font-size: 24px;
+        opacity: 0.5;
+    }
+
+    /* Wygląd kuli ognia */
+    .money-ball {
+        width: 70px;
+        height: 70px;
+        background: radial-gradient(circle at 30% 30%, #ffff00, #ff4400, #880000);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 900;
+        text-shadow: 1px 1px 2px black;
+        box-shadow: 0 0 15px #ff4400;
+        animation: pulse 1.5s infinite alternate;
+        text-align: center;
+        line-height: 1.1;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 10px #ff4400; }
+        100% { transform: scale(1.05); box-shadow: 0 0 20px #ffaa00; }
+    }
+
+    #controls {
+        margin-top: 20px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    button {
+        padding: 15px 40px;
+        font-size: 20px;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: linear-gradient(to bottom, #ffaa00, #ff4400);
+        color: white;
+        text-transform: uppercase;
+        box-shadow: 0 5px 15px rgba(255, 68, 0, 0.4);
+        transition: 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+        transform: scale(1.05);
+        background: linear-gradient(to bottom, #ffcc00, #ff6600);
+    }
+
+    button:disabled {
+        background: #555;
+        color: #888;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    #status-msg {
+        margin-top: 15px;
+        font-size: 22px;
+        height: 30px;
+        font-weight: bold;
+        color: #00ffcc;
+    }
+
+    #respins-display {
+        display: none;
+        font-size: 24px;
+        color: #ffaa00;
+        font-weight: bold;
+        margin-bottom: 10px;
+        background: #220000;
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 2px solid #ffaa00;
+    }
+
+    /* Ukrywanie górnych rzędów w grze bazowej */
+    .base-game-hide {
+        opacity: 0.1;
+    }
+</style>
+</head>
+<body>
+
+<div id="header">
+    <div id="balance-display">💰 <span id="balance">1000000</span></div>
+    <div style="color:#aaa; margin-top:5px;">Stawka stała: 100,000$</div>
+</div>
+
+<div class="jackpot-bar">
+    <div class="jp-box jp-grand">GRAND<br>10M</div>
+    <div class="jp-box jp-mega">MEGA<br>5M</div>
+    <div class="jp-box jp-major">MAJOR<br>1M</div>
+    <div class="jp-box jp-mini">MINI<br>500K</div>
+</div>
+
+<div id="respins-display">RESPINS: <span id="respin-count">3</span> z 3</div>
+
+<div id="slot-container">
+    <div class="grid" id="grid">
+        <!-- Komórki generowane przez JS -->
+    </div>
+</div>
+
+<div id="status-msg">Kliknij SPIN, aby zagrać!</div>
+
+<div id="controls">
+    <button id="btn-spin" onclick="spinBaseGame()">SPIN</button>
+</div>
+
+<a style="margin-top: 20px;text-decoration: none; color: white;background: rgba(0,0,0,0.5);padding: 8px 15px;border-radius: 5px;font-size: 14px;" href="index.html">← Powrót do domu</a>
+<script>
+
+    // Konfiguracja
+    const STAKE = 100000;
+    let balance = parseInt(localStorage.getItem('slot_money')) || 1000000;
+    
+    // Wartości monet (w tysiącach / milionach dla czytelności na kulkach, ale w kodzie pełne liczby)
+    const values = [50000, 100000, 200000, 500000, 1000000, 5000000];
+    const jackpots = [
+        { name: "MINI", val: 500000 },
+        { name: "MAJOR", val: 1000000 },
+        { name: "MEGA", val: 5000000 },
+        { name: "GRAND", val: 10000000 }
+    ];
+
+    // Stan gry
+    let gridData = new Array(30).fill(null); // 0-29. Rzędy: 0-4 (Top), 5-9, 10-14, 15-19, 20-24, 25-29 (Bottom)
+    let inJackpotGame = false;
+    let respins = 3;
+    let isSpinning = false;
+
+    // Inicjalizacja UI
+    const gridEl = document.getElementById('grid');
+    const balanceEl = document.getElementById('balance');
+    const msgEl = document.getElementById('status-msg');
+    const btnSpin = document.getElementById('btn-spin');
+    const respinDisplay = document.getElementById('respins-display');
+    const respinCount = document.getElementById('respin-count');
+
+    function updateBalance(amount) {
+        balance += amount;
+        balanceEl.innerText = balance.toLocaleString();
+        localStorage.setItem('slot_money', balance);
+    }
+    updateBalance(0);
+
+    // Generowanie siatki HTML
+    function buildGrid() {
+        gridEl.innerHTML = '';
+        for (let i = 0; i < 30; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.id = 'cell-' + i;
+            gridEl.appendChild(cell);
+        }
+        applyBaseGameVisibility();
+    }
+    buildGrid();
+
+    // Szablon bazowy
+    function applyBaseGameVisibility() {
+        for (let i = 0; i < 30; i++) {
+            let cell = document.getElementById('cell-' + i);
+            if (i < 15) { // 3 górne rzędy
+                cell.classList.add('base-game-hide');
+                cell.classList.remove('locked');
+            } else { // 3 dolne rzędy (gra bazowa)
+                cell.classList.remove('base-game-hide');
+                cell.classList.remove('locked');
+            }
+        }
+    }
+
+    function getRandomBall() {
+        // Zmniejszona szansa na pustą przestrzeń dla dema, żebyś zobaczył tryb
+        let rand = Math.random();
+        if (rand > 0.14) return null; // 82% szans na puste pole w bazowej
+
+        // Losowanie wartości lub jackpota
+        let typeRand = Math.random();
+        if (typeRand > 0.95) { // 5% na jackpota
+            let jp = jackpots[Math.floor(Math.random() * jackpots.length)];
+            return { type: 'jackpot', name: jp.name, val: jp.val };
+        } else {
+            // Losowanie zwykłej wartości z wagami (50k najczęściej)
+            let valRand = Math.random();
+            let v = values[0];
+            if(valRand > 0.6) v = values[1];
+            if(valRand > 0.8) v = values[2];
+            if(valRand > 0.9) v = values[3];
+            if(valRand > 0.96) v = values[4];
+            if(valRand > 0.99) v = values[5];
+            
+            return { type: 'value', val: v };
+        }
+    }
+
+    function renderBallHTML(data) {
+        if (!data) return '';
+        let displayTxt = '';
+        if (data.type === 'jackpot') {
+            displayTxt = `${data.name}`;
+        } else {
+            if (data.val >= 1000000) displayTxt = (data.val / 1000000) + "M";
+            else if (data.val >= 1000) displayTxt = (data.val / 1000) + "K";
+            else displayTxt = data.val;
+        }
+        return `<div class="money-ball">${displayTxt}</div>`;
+    }
+
+    function renderGrid() {
+        for (let i = 0; i < 30; i++) {
+            let cell = document.getElementById('cell-' + i);
+            let content = renderBallHTML(gridData[i]);
+            // Jeśli jest zablokowane i puste, to ma kłódkę (CSS), jak ma kulę to kłódka znika pod nią
+            if (!cell.classList.contains('locked') || gridData[i]) {
+                cell.innerHTML = content;
+            } else {
+                cell.innerHTML = ''; 
+            }
+        }
+    }
+
+    function spinBaseGame() {
+        if (isSpinning || inJackpotGame) return;
+        if (balance < STAKE) {
+            msgEl.innerText = "Brak środków! (Odśwież stronę, by zresetować)";
+            msgEl.style.color = "red";
+            return;
+        }
+
+        updateBalance(-STAKE);
+        isSpinning = true;
+        btnSpin.disabled = true;
+        msgEl.innerText = "Kręcę...";
+        msgEl.style.color = "white";
+        
+        gridData.fill(null);
+        renderGrid();
+
+        setTimeout(() => {
+            let ballsCount = 0;
+            let sumBase = 0;
+
+            // Losujemy tylko dolne 15 pól (indeksy 15 do 29)
+            for (let i = 15; i < 30; i++) {
+                let ball = getRandomBall();
+                if (ball) {
+                    gridData[i] = ball;
+                    ballsCount++;
+                    sumBase += ball.val;
+                }
+            }
+
+            renderGrid();
+
+            if (ballsCount >= 4) {
+                msgEl.innerText = `Trafiłeś ${ballsCount} kul! START JACKPOT GAME!`;
+                msgEl.style.color = "#ff4400";
+                setTimeout(initJackpotGame, 2000);
+            } else if (ballsCount > 0) {
+                msgEl.innerText = `Zgarniasz ${sumBase.toLocaleString()}$ na czysto!`;
+                msgEl.style.color = "gold";
+                updateBalance(sumBase);
+                isSpinning = false;
+                btnSpin.disabled = false;
+            } else {
+                msgEl.innerText = "Brak wygranej. Próbuj dalej!";
+                msgEl.style.color = "#aaa";
+                isSpinning = false;
+                btnSpin.disabled = false;
+            }
+        }, 800);
+    }
+
+    function initJackpotGame() {
+        inJackpotGame = true;
+        respins = 3;
+        
+        // Zmiana UI na tryb bonusowy
+        respinDisplay.style.display = "block";
+        updateRespinUI();
+        btnSpin.innerText = "SPIN JACKPOT";
+        btnSpin.onclick = spinJackpotGame;
+        btnSpin.disabled = false;
+        isSpinning = false;
+
+        // Reset górnych rzędów na widoczne, ale zablokowane
+        for (let i = 0; i < 30; i++) {
+            let cell = document.getElementById('cell-' + i);
+            cell.classList.remove('base-game-hide');
+            if (i < 15) {
+                cell.classList.add('locked');
+            }
+        }
+        
+        msgEl.innerText = "JACKPOT GAME! Zbieraj kule, aby odblokować rzędy!";
+        msgEl.style.color = "#ffaa00";
+        checkUnlockRows();
+    }
+
+    function updateRespinUI() {
+        respinCount.innerText = respins;
+    }
+
+    function countTotalBalls() {
+        return gridData.filter(x => x !== null).length;
+    }
+
+    function checkUnlockRows() {
+        let total = countTotalBalls();
+        // Rząd 3 (indeksy 10-14) - odblokowuje się przy 10 symbolach
+        if (total >= 10) unlockRow(10, 14);
+        // Rząd 2 (indeksy 5-9) - odblokowuje się przy 15 symbolach
+        if (total >= 15) unlockRow(5, 9);
+        // Rząd 1 (indeksy 0-4) - odblokowuje się przy 20 symbolach
+        if (total >= 20) unlockRow(0, 4);
+    }
+
+    function unlockRow(start, end) {
+        let unlockedAny = false;
+        for(let i = start; i <= end; i++) {
+            let cell = document.getElementById('cell-' + i);
+            if(cell.classList.contains('locked')) {
+                cell.classList.remove('locked');
+                unlockedAny = true;
+            }
+        }
+        if(unlockedAny) {
+             msgEl.innerText = "Nowy rząd odblokowany!";
+        }
+    }
+
+    function spinJackpotGame() {
+        if (isSpinning || respins <= 0) return;
+        isSpinning = true;
+        btnSpin.disabled = true;
+        msgEl.innerText = "Losowanie...";
+
+        setTimeout(() => {
+            let newBallLanded = false;
+
+            for (let i = 0; i < 30; i++) {
+                let cell = document.getElementById('cell-' + i);
+                // Losujemy tylko na niezablokowanych i PUSTYCH polach
+                if (!cell.classList.contains('locked') && gridData[i] === null) {
+                    // W trybie jackpot lekko zmieniamy szansę
+                    if (Math.random() < 0.12) { 
+                        gridData[i] = getRandomBall() || { type: 'value', val: 50000 }; // Gwarantowana kula, jeśli weszło w %
+                        newBallLanded = true;
+                    }
+                }
+            }
+
+            renderGrid();
+            checkUnlockRows();
+
+            if (newBallLanded) {
+                respins = 3;
+                msgEl.innerText = "Nowa kula! Respins zresetowane do 3!";
+                msgEl.style.color = "#00ffcc";
+            } else {
+                respins--;
+                msgEl.innerText = "Brak nowej kuli...";
+                msgEl.style.color = "#aaa";
+            }
+
+            updateRespinUI();
+
+            // Sprawdzenie końca gry
+            let totalBalls = countTotalBalls();
+            let availableSlots = 0;
+            for(let i=0; i<30; i++) {
+                if(!document.getElementById('cell-'+i).classList.contains('locked')) availableSlots++;
+            }
+
+            if (respins === 0 || totalBalls === availableSlots) {
+                setTimeout(endJackpotGame, 1000);
+            } else {
+                isSpinning = false;
+                btnSpin.disabled = false;
+            }
+
+        }, 800);
+    }
+
+    function endJackpotGame() {
+        let totalWin = 0;
+        gridData.forEach(ball => {
+            if (ball) totalWin += ball.val;
+        });
+
+        msgEl.innerHTML = `KONIEC GRY! Wygrywasz łącznie: <span style="color:gold;">${totalWin.toLocaleString()}$</span>`;
+        updateBalance(totalWin);
+        
+        btnSpin.innerText = "WRÓĆ DO GRY BAZOWEJ";
+        btnSpin.onclick = resetToBaseGame;
+        btnSpin.disabled = false;
+    }
+
+    function resetToBaseGame() {
+        inJackpotGame = false;
+        isSpinning = false;
+        respinDisplay.style.display = "none";
+        
+        btnSpin.innerText = "SPIN";
+        btnSpin.onclick = spinBaseGame;
+        
+        gridData.fill(null);
+        applyBaseGameVisibility();
+        renderGrid();
+        
+        msgEl.innerText = "Gotowy na kolejne losowanie.";
+        msgEl.style.color = "#00ffcc";
+    }
+    
+    document.addEventListener("keydown", function(event) {
+        if(event.key.toLowerCase() === "t") {
+            document.getElementById("btn-spin").click();
+        }
+    });
+</script>
+</body>
+</html>

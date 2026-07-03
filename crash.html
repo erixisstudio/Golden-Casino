@@ -43,6 +43,7 @@ function start() {
     let bet = parseInt(document.getElementById("bet3").value);
     if (bet > money3 || running) return;
 
+    
     money3 -= bet;
     running = true;
     multiplier = 1;
@@ -52,17 +53,15 @@ function start() {
         multiplier += 0.05;
         document.getElementById("multi").innerText = multiplier.toFixed(2);
 
-        // 💥 crash random
         if (Math.random() < 0.02) {
     clearInterval(interval);
     running = false;
 
     document.getElementById("res3").innerText = "💥 CRASH! STRACIŁEŚ BET";
 
-    // zapisujemy stan (money już wcześniej zmniejszone)
     save3();
 
-    window.currentBet = 0; // zabezpieczenie
+    window.currentBet = 0; 
 }
 
     }, 100);
@@ -101,6 +100,6 @@ document.addEventListener("keydown", function(event) {
 save3();
 });
 </script>
-<a href="index.html">dom</a>
+<a style="margin-top: 20px;text-decoration: none; color: white;background: rgba(0,0,0,0.5);padding: 8px 15px;border-radius: 5px;font-size: 14px;" href="index.html">← Powrót do domu</a>
 </body>
 </html>

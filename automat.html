@@ -103,16 +103,16 @@ button:hover{
 </style>
 </head>
 <body>
-<a style="text-decoration: none; color: black;" href="index.html">dom</a>
+<a style="margin-top: 20px;text-decoration: none; color: white;background: rgba(0,0,0,0.5);padding: 8px 15px;border-radius: 5px;font-size: 14px;" href="index.html">← Powrót do domu</a>
 <div class="slot">
     <h1>Slot x10</h1>
-    <div class="money">💰 Pieniądze główne: <span id="money">100</span>$</div>
+    <div class="money">💰 <span id="money">100</span>$</div>
     
     <div id="setupPanel">
-        <button onclick="startSession(15)">15 Spinów (300k$)</button>
-        <button onclick="startSession(25)">25 Spinów (1mln$)</button>
-        <button onclick="startSession(50)">50 Spinów (3mln$)</button>
-        <button onclick="startSession(100)">100 Spinów (30mln$)</button>
+        <button onclick="startSession(15)">15 Spinów (80k$)</button>
+        <button onclick="startSession(25)">25 Spinów (500k$)</button>
+        <button onclick="startSession(50)">50 Spinów (1mln$)</button>
+        <button onclick="startSession(100)">100 Spinów (9mln$)</button>
     </div>
 
     <div id="spinPanel" style="display:none;">
@@ -186,23 +186,19 @@ function randomSymbol(){
 
 function startSession(amount){
     let cost = 0;
-
-    // Tutaj ręcznie ustalasz OGÓLNĄ cenę za cały pakiet:
+    
     if (amount === 15) {
-        cost = 300000;   // Cena za pakiet 15 spinów (w przeliczeniu ok. 46k za spin - opłaca się!)
+        cost = 80000;   
     } 
     else if (amount === 25) {
-        cost = 1000000;  // Cena za pakiet 25 spinów (w przeliczeniu ok. 48k za spin)
+        cost = 500000; 
     } 
     else if (amount === 50) {
-        cost = 3000000;  // Twoja wyważona cena za 50 spinów (60k za spin)
+        cost = 1000000;  
     } 
     else if (amount === 100) {
-        cost = 30000000;  // Twoja wyważona cena za 50 spinów (60k za spin)
+        cost = 9000000;  
     } 
-    else {
-        cost = amount * 60000; // Awaryjny koszt na wypadek, gdybyś dodał inny przycisk
-    }
 
     // Reszta funkcji zostaje dokładnie taka sama jak była:
     if(money < cost){

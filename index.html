@@ -19,18 +19,23 @@
 </style>
 <body>
     <p style=" position: absolute; right:1% ;" id="money">money:</p>
-    <a style="top: 5%;" href="automat.html">   Slot   </a>
-    <a style="top: 15%;" href="baccarat.html">   Baccarat   </a>
-    <a style="top: 25%;" href="zdrapka.html">   keno   </a>
-    <a style="top: 35%;" href="roulette.html">   roulette   </a>
-    <a style="top: 45%;" href="kość.html">   craps   </a>
-    <a style="top: 55%;" href="crash.html">   crash   </a>
+    <a style="top: 5%;" href="automat.html">Slot</a>
+    <a style="top: 15%;" href="baccarat.html">Baccarat</a>
+    <a style="top: 25%;" href="zdrapka.html">Keno</a>
+    <a style="top: 35%;" href="roulette.html">Roulette</a>
+    <a style="top: 45%;" href="kość.html">Craps</a>
+    <a style="top: 55%;" href="crash.html">Crash</a>
+    <a style="top: 65%;" href="blackjack.html">Blackjack   </a>
+    <a style="top: 75%;" href="poker.html">Poker</a>
+    <a style="top: 85%;" href="automat2.html">Volcano Slot</a>
 
+
+    <a style=" right: 5%;top: 88%;" href="blik.html">   blik   </a>
     
 </body>
 <script>
-
     let money = parseInt(localStorage.getItem("money")) || 1000;
+    document.getElementById("money").innerText = "" +money;
 
     document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("money").innerText = money;

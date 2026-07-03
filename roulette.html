@@ -91,15 +91,7 @@ button:disabled {
     min-height: 30px;
 }
 
-.back-link {
-    margin-top: 20px;
-    text-decoration: none;
-    color: white;
-    background: rgba(0,0,0,0.5);
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-size: 14px;
-}
+
 </style>
 </head>
 
@@ -129,7 +121,7 @@ button:disabled {
     <div id="result">Wybierz zakład i zakręć!</div>
 </div>
 
-<a class="back-link" href="index.html">← Powrót do domu</a>
+<a style="margin-top: 20px;text-decoration: none; color: white;background: rgba(0,0,0,0.5);padding: 8px 15px;border-radius: 5px;font-size: 14px;" href="index.html">← Powrót do domu</a>
 
 <script>
 let money = parseInt(localStorage.getItem("money")) || 100000;
@@ -138,7 +130,6 @@ document.getElementById("money").innerText = "💰 " + money;
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 
-// Oryginalny, oficjalny układ koła europejskiej ruletki (od 0 do 26)
 const rouletteOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
